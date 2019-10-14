@@ -1,9 +1,5 @@
 <template>
   <div class="to-do-list">
-    <h4>
-      TodoList
-      <span class="color-primary">CC</span>
-    </h4>
     <div class="container">
       <input
         type="text"
@@ -13,25 +9,36 @@
         @keyup.enter="addTodo"
       />
       <ul class="todos">
-        <li v-for="(todo, i) in todosFilter" :key="i" class="item is-relative">
-          <input type="checkbox" v-model="todo.completed" />
-          <span
-            class="middle"
-            v-if="!todo.editting"
-            @dblclick="editTodo(todo)"
-            :class="{completed: todo.completed}"
-          >{{todo.title}}</span>
-          <input
-            v-else
-            v-focus
-            type="text"
-            placeholder="Enter a task!"
-            v-model="todo.title"
-            @blur="cancelEdit(todo)"
-            @keyup.enter="editedTodo(todo)"
-          />
-          <div class="remove-item" @click="removeTodo(i)">&times;</div>
-        </li>
+        <transition-group
+          name="fade"
+          enter-active-class="animated fadeInUp"
+          leave-active-class="animated fadeOutDown"
+        >
+          <li
+            v-for="(todo, i) in todosFilter"
+            :key="todo.id"
+            class="item is-relative"
+            @click="todo.completed = !todo.completed"
+          >
+            <input type="checkbox" v-model="todo.completed" />
+            <span
+              class="middle"
+              v-if="!todo.editting"
+              @dblclick="editTodo(todo)"
+              :class="{completed: todo.completed}"
+            >{{todo.title}}</span>
+            <input
+              v-else
+              v-focus
+              type="text"
+              placeholder="Enter a task!"
+              v-model="todo.title"
+              @blur="cancelEdit(todo)"
+              @keyup.enter="editedTodo(todo)"
+            />
+            <div class="remove-item" @click="removeTodo(i)">&times;</div>
+          </li>
+        </transition-group>
       </ul>
       <hr />
       <div class="section-1 clr">
@@ -44,19 +51,29 @@
         </div>
       </div>
       <hr />
-      <div class="section-2 footer">
+      <!-- <FilterTab :showClearCompletedBtnFromChild="showClearCompletedBtn" @onClearCompletedFromChild="onClearCompleted" /> -->
+      <div class="section-2 footer left">
         <button :class="{active: filter == 'all'}" @click="filter = 'all'">All</button>
         <button :class="{active: filter == 'active'}" @click="filter = 'active'">Active</button>
         <button :class="{active: filter == 'completed'}" @click="filter = 'completed'">Completed</button>
       </div>
+      <transition name="fade">
+        <div class="right">
+          <button v-if="showClearCompletedBtn" @click="onClearCompleted">Clear Completed</button>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
 
 <script>
-import { log } from "util";
+import FilterTab from "./FilterTab";
+
 export default {
   name: "ToDoList",
+  components: {
+    FilterTab
+  },
   data() {
     return {
       newTodo: "",
@@ -100,6 +117,9 @@ export default {
           return this.todos;
           break;
       }
+    },
+    showClearCompletedBtn() {
+      return this.todos.filter(v => v.completed).length > 0;
     }
   },
   directives: {
@@ -144,6 +164,10 @@ export default {
         v.completed = event.target.checked;
         return v;
       });
+    },
+    onClearCompleted() {
+      console.log(1234);
+      this.todos = this.todos.filter(v => !v.completed);
     }
   }
 };
@@ -151,82 +175,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss">
-.clr {
-  &::after {
-    display: block;
-    content: "";
-    clear: both;
-  }
+@import url("https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.min.css");
+.todo-input {
+  width: 480px;
 }
-.left {
-  float: left;
+// CSS transitions
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
 }
-.right {
-  float: right;
-}
-.middle {
-  vertical-align: middle;
-}
-input {
-  outline: 0;
-}
-.is-relative {
-  position: relative;
-}
-.remove-item {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-}
-.container {
-  max-width: 500px;
-  margin: auto;
-}
-ul {
-  padding: 0;
-  max-height: 300px;
-  overflow: scroll;
-}
-li {
-  list-style: none;
-  text-align: left;
-  padding: 5px 0 5px 10px;
-  &:hover {
-    cursor: pointer;
-    background: #ececec;
-  }
-}
-.color-primary {
-  color: #42b983;
-}
-.form-control {
-  line-height: 30px;
-  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
-  outline: 0;
-  border: solid 1px #ececec;
-  padding: 0 10px;
-  width: 100%;
-  border-radius: 4px;
-}
-.completed {
-  text-decoration: line-through;
-  color: gray;
-}
-.active {
-  background: greenyellow;
-}
-button {
-  outline: 0;
-  height: 30px;
-  padding: 0 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.footer {
-  position: fixed;
-  left: 50%;
-  bottom: 10%;
-  transform: translateX(-50%);
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
